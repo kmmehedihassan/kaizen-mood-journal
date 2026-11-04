@@ -1,6 +1,231 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: <html class="dark"> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --mood-hue drives the whole palette and animates smoothly between moods */
+@property --mood-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 160;
+}
+
+:root {
+  --mood-hue: 160;
+  --bg: oklch(0.985 0.006 var(--mood-hue));
+  --surface: oklch(1 0 0 / 0.78);
+  --surface-solid: oklch(1 0 0);
+  --surface-2: oklch(0.965 0.012 var(--mood-hue));
+  --ink: oklch(0.24 0.02 260);
+  --ink-2: oklch(0.42 0.02 260);
+  --muted: oklch(0.55 0.015 260);
+  --border: oklch(0.9 0.01 260);
+  --accent: oklch(0.6 0.15 var(--mood-hue));
+  --accent-ink: oklch(0.42 0.13 var(--mood-hue));
+  --accent-soft: oklch(0.94 0.04 var(--mood-hue));
+  --glow-a: oklch(0.88 0.09 var(--mood-hue) / 0.55);
+  --glow-b: oklch(0.9 0.07 calc(var(--mood-hue) + 60) / 0.45);
+  color-scheme: light;
+  transition: --mood-hue 1.2s ease;
+}
+
+.dark {
+  --bg: oklch(0.17 0.015 var(--mood-hue));
+  --surface: oklch(0.23 0.015 var(--mood-hue) / 0.75);
+  --surface-solid: oklch(0.22 0.015 var(--mood-hue));
+  --surface-2: oklch(0.27 0.02 var(--mood-hue));
+  --ink: oklch(0.95 0.01 260);
+  --ink-2: oklch(0.82 0.01 260);
+  --muted: oklch(0.68 0.015 260);
+  --border: oklch(0.33 0.015 260);
+  --accent: oklch(0.72 0.14 var(--mood-hue));
+  --accent-ink: oklch(0.82 0.11 var(--mood-hue));
+  --accent-soft: oklch(0.3 0.05 var(--mood-hue));
+  --glow-a: oklch(0.42 0.12 var(--mood-hue) / 0.35);
+  --glow-b: oklch(0.38 0.1 calc(var(--mood-hue) + 60) / 0.28);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-solid: var(--surface-solid);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@theme {
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-sway: sway 4s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(2%, -3%, 0) scale(1.05); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-2.5deg); }
+    50% { transform: rotate(2.5deg); }
+  }
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background-color: #f9fafb; /* Tailwind bg-gray-50 */
-  color: #1f2937;            /* Tailwind text-gray-800 */
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+@keyframes ambient-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(4%, -5%, 0) scale(1.08); }
+}
+
+/* Soft, mood-tinted aurora behind everything */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ambient::before,
+.ambient::after {
+  content: "";
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: ambient-drift 16s ease-in-out infinite;
+}
+.ambient::before {
+  top: -35vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, var(--glow-a), transparent 65%);
+}
+.ambient::after {
+  bottom: -40vmax;
+  right: -25vmax;
+  background: radial-gradient(circle, var(--glow-b), transparent 65%);
+  animation-delay: -8s;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  font-size: 0.925rem;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s;
+  cursor: pointer;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent-ink);
+  color: var(--surface-solid);
+  box-shadow: 0 6px 20px -8px var(--accent);
+}
+.dark .btn-primary { color: oklch(0.18 0.02 260); background: var(--accent); }
+.btn-primary:hover:not(:disabled) { box-shadow: 0 10px 28px -8px var(--accent); }
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+  background: var(--surface);
+  transition: all 0.15s ease;
+}
+.chip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.input {
+  width: 100%;
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input::placeholder { color: var(--muted); }
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input[type="range"] { accent-color: var(--accent); }
+
+.quote-text { font-family: var(--font-serif); }
+
+/* Breathing orb */
+.orb {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, oklch(0.92 0.08 var(--mood-hue)), var(--accent) 70%);
+  box-shadow: 0 0 80px -10px var(--accent), inset 0 0 40px oklch(1 0 0 / 0.3);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

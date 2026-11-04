@@ -62,3 +62,7 @@ Thumbs.db
 # Coverage reports
 coverage/
 .vercel
+
+# SQLite artifacts
+*.db
+*.db-journal

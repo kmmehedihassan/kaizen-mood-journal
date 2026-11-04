@@ -1,25 +1,24 @@
 {
-  "name": "kaizen-quote-website",
-  "version": "0.1.0",
+  "name": "kaizen-mood-journal",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node --loader ts-node/esm prisma/seed.ts",
-    "postinstall": "prisma migrate deploy"
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "npm run seed"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@huggingface/inference": "^4.7.1",
     "@prisma/client": "^5.22.0",
     "next": "14.x",
-    "openai": "^4.0.0",
     "react": "18.x",
     "react-dom": "18.x",
     "uuid": "^9.0.0"
@@ -31,11 +30,11 @@
     "@types/react-dom": "^19.1.6",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.0.0",
-    "node-loader": "^2.1.0",
     "postcss": "^8.0.0",
     "prisma": "^5.22.0",
     "tailwindcss": "^4.1.11",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.2"
   }
 }

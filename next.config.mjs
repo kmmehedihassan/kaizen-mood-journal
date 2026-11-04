@@ -1,17 +1,14 @@
 // next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack(config, { isServer }) {
-    if (isServer) {
-      config.module.rules.push({
-        test: /\.node$/,
-        use: {
-          loader: 'node-loader',
-          options: { name: '[path][name].[ext]' },
-        },
-      });
-    }
-    return config;
+  reactStrictMode: true,
+  async redirects() {
+    // Legacy category URLs now live under /quotes/[category]
+    return ["motivational", "romantic", "funny"].map((c) => ({
+      source: `/${c}`,
+      destination: `/quotes/${c}`,
+      permanent: true,
+    }));
   },
 };
 
