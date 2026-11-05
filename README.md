@@ -13,7 +13,7 @@ and watch your days grow into a **Mood Garden**.
 | | |
 |---|---|
 | **😌 Instant check-in** (home) | Pick one of 9 moods → an empathetic note, three ≤2-minute "1% actions" you can tick off, and a matched quote. |
-| **📓 Journal** (`/journal`) | Mood + intensity + note + tags + a gratitude line. Rotating writing prompts. While you type, Kaizen **suggests a mood from your words** (local sentiment detection). Search & filter your timeline. |
+| **📓 Journal** (`/journal`) | Mood + intensity + note + tags + a gratitude line. Rotating writing prompts. While you type, Kaizen **suggests a mood from your words** (local sentiment detection). Edit or delete entries; search & filter your timeline. |
 | **✨ AI reflections** | One click asks the AI for a short, kind reflection on an entry (with a thoughtful built-in fallback when no AI is configured). |
 | **🌷 Mood Garden** (`/garden`) | Each check-in plants a generative SVG flower: petal count and colour come from the mood, size from intensity, and hard days droop a little. Includes a **mood weather** forecast for the week and a six-month **year-in-pixels** view. |
 | **📈 Insights** (`/insights`) | Streaks, "Kaizen growth" (1.01ⁿ), a 30-day mood trend with hover tooltips, mood mix, weekly rhythm, **which tags lift or drain you**, and a gratitude wall. Export, import or clear your data. |
@@ -21,6 +21,7 @@ and watch your days grow into a **Mood Garden**.
 | **💬 Quotes** (`/quotes`) | 55+ curated quotes in 7 collections (motivational, romantic, funny, calm, resilience, gratitude, wisdom). Search, shuffle, "surprise me", save favourites, **read aloud**, share, or **download as an image**. |
 | **🤖 Chat companion** | `⌘K` / `Ctrl+K` anywhere. Greets you, routes quote requests, answers feelings with empathy, a tiny step, a quote and quick links, and chats freely through an LLM. Includes a crisis-safety response. |
 | **🎨 Living theme** | The app's colour gently shifts to match your latest mood. Light/dark/system theme, mobile-first, keyboard accessible, and respects reduced motion. |
+| **📲 Installable** | Add Kaizen to your home screen or desktop as an app, with shortcuts to check-in, Breathe and Garden. |
 
 ### Privacy by design
 Journal entries, favourites and streaks live **only in your browser's localStorage**. Nothing is
@@ -34,7 +35,7 @@ sent anywhere unless you press **Reflect** (sends that one entry to the AI provi
 ---
 
 ## Tech stack
-- **Next.js 14** (App Router, route handlers), **React 18**, **TypeScript**
+- **Next.js 15** (App Router, route handlers), **React 19**, **TypeScript**
 - **Tailwind CSS v4** with theme tokens (OKLCH, mood-hue driven)
 - **Prisma + PostgreSQL** (optional)
 - **LLM** via any OpenAI-compatible endpoint: Hugging Face router, OpenAI, or Ollama
@@ -51,6 +52,8 @@ npm run dev
 Open <http://localhost:3000>. That's it. Everything works out of the box.
 
 ### Optional environment variables (`.env.local`)
+
+Copy `.env.example` to `.env.local`. Never commit real secrets; `.env*` files are git-ignored.
 
 ```env
 # AI provider: the first one configured is used, and the next is tried if it fails
@@ -79,6 +82,8 @@ npm run seed            # optional: copy the built-in quotes into the DB
 | `npm run dev` | Dev server |
 | `npm run build` / `start` | Production build / serve |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (zero warnings allowed) |
+| `npm test` | Unit + API tests (Node test runner + tsx) |
 | `npm run seed` | Seed quotes into the DB |
 
 ---
@@ -91,6 +96,8 @@ npm run seed            # optional: copy the built-in quotes into the DB
 | `GET` / `DELETE` | `/api/messages?sessionId=` | Read or clear a chat session (DB only) |
 | `GET` | `/api/quotes` | Query: `category`, `q`, `limit`, `random`, `daily` |
 | `POST` | `/api/reflect` | `{ mood, intensity, note, tags }` → `{ reflection, source: "ai" \| "builtin" }` |
+
+The AI endpoints are rate-limited per client (chat 20/min, reflect 10/min) and return `429` with `Retry-After` when exceeded.
 
 Legacy URLs `/motivational`, `/romantic` and `/funny` permanently redirect to `/quotes/<category>`.
 
@@ -115,6 +122,8 @@ src/
     prisma.ts                # optional DB with timeout-safe access
   tools/navigate.ts          # chat "navigate" tool
 prisma/ schema.prisma, seed.ts
+tests/                       # *.test.ts (client libs), *.server-test.ts (API routes)
+.github/workflows/ci.yml     # typecheck, lint, test, build on every push/PR
 ```
 
 ---

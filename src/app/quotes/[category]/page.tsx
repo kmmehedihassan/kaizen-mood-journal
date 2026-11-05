@@ -11,13 +11,17 @@ export function generateStaticParams() {
   return CATEGORIES.map((c) => ({ category: c.id }));
 }
 
-export function generateMetadata({ params }: { params: { category: string } }): Metadata {
-  const meta = isCategory(params.category) ? CATEGORY_MAP[params.category] : null;
+type Props = { params: Promise<{ category: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { category } = await params;
+  const meta = isCategory(category) ? CATEGORY_MAP[category] : null;
   return meta ? { title: `${meta.label} quotes`, description: meta.description } : {};
 }
 
-export default async function CategoryPage({ params }: { params: { category: string } }) {
-  if (!isCategory(params.category)) notFound();
+export default async function CategoryPage({ params }: Props) {
+  const { category } = await params;
+  if (!isCategory(category)) notFound();
   const quotes = await getAllQuotes();
-  return <QuoteExplorer quotes={quotes} initialCategory={params.category} />;
+  return <QuoteExplorer quotes={quotes} initialCategory={category} />;
 }

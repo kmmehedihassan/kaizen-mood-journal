@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .ts,.tsx,.js,.mjs --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "seed": "tsx prisma/seed.ts",
@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
-    "next": "^14.2.35",
-    "react": "18.x",
-    "react-dom": "18.x",
+    "next": "^15.5.29",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
@@ -31,12 +31,17 @@
     "@types/react-dom": "^19.1.6",
     "autoprefixer": "^10.0.0",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
+    "eslint-config-next": "^15.5.29",
     "postcss": "^8.0.0",
     "prisma": "^5.22.0",
     "tailwindcss": "^4.1.11",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.23"
+    }
   }
 }
