@@ -60,7 +60,6 @@ export function QuoteExplorer({ quotes, initialCategory }: { quotes: Quote[]; in
               role="tab"
               type="button"
               aria-selected={tab === c.id}
-              aria-pressed={tab === c.id}
               className="chip shrink-0"
               onClick={() => selectTab(c.id as Tab)}
             >

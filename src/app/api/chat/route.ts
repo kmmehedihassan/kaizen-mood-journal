@@ -15,6 +15,7 @@ import { complete, type ChatMessage } from "@/lib/llm";
 import { detectMood, detectCategoryRequest } from "@/lib/sentiment";
 import { MOOD_MAP, MOODS, pickBySeed, type MoodId } from "@/lib/moods";
 import { CATEGORY_MAP, QUOTES } from "@/data/quotes";
+import { clientKey, rateLimit } from "@/lib/rateLimit";
 
 type Suggestion = { label: string; href: string };
 type Reply = { assistantMsg: string; route?: string | null; suggestions?: Suggestion[]; mood?: MoodId | null };
@@ -48,6 +49,13 @@ function quoteFor(category: string, seed: string) {
 }
 
 export async function POST(request: Request) {
+  const limit = rateLimit(`chat:${clientKey(request)}`, 20, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { assistantMsg: "You're sending messages faster than I can think 🌱 — give me a few seconds and try again." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
   let body: { sessionId?: unknown; message?: unknown; history?: unknown };
   try {
     body = await request.json();

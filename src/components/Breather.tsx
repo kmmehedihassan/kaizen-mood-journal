@@ -105,7 +105,6 @@ export function Breather() {
             role="radio"
             aria-checked={p.id === pattern.id}
             className="chip"
-            aria-pressed={p.id === pattern.id}
             disabled={running}
             onClick={() => setPattern(p)}
           >
@@ -154,7 +153,7 @@ export function Breather() {
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         {!running && (
-          <div className="flex gap-1" role="radiogroup" aria-label="Duration">
+          <div className="flex gap-1" role="group" aria-label="Duration">
             {DURATIONS.map((d) => (
               <button key={d} type="button" className="chip" aria-pressed={minutes === d} onClick={() => setMinutes(d)}>
                 {d} min

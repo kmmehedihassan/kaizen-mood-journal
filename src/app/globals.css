@@ -183,7 +183,9 @@ body {
   background: var(--surface);
   transition: all 0.15s ease;
 }
-.chip[aria-pressed="true"] {
+.chip[aria-pressed="true"],
+.chip[aria-checked="true"],
+.chip[aria-selected="true"] {
   background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--accent-ink);

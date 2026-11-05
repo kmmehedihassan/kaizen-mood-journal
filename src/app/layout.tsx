@@ -5,8 +5,10 @@ import NavBar from "@/components/NavBar";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { MoodAmbience } from "@/components/MoodAmbience";
 import { Toaster } from "@/components/Toaster";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "Kaizen — mood journal", template: "%s · Kaizen" },
   description:
     "A private, AI-assisted mood journal. Check in daily, grow a Mood Garden, discover what lifts you up, and get 1% better every day.",

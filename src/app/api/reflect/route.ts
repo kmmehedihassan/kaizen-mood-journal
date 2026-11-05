@@ -8,8 +8,16 @@ import { NextResponse } from "next/server";
 import { complete } from "@/lib/llm";
 import { MOOD_MAP, isMoodId, pickBySeed } from "@/lib/moods";
 import { QUOTES } from "@/data/quotes";
+import { clientKey, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
+  const limit = rateLimit(`reflect:${clientKey(request)}`, 10, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many reflections at once — try again in a moment." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
   let body: Record<string, unknown>;
   try {
     body = await request.json();

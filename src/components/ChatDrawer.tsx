@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { v4 as uuid } from "uuid";
 import { useRouter } from "next/navigation";
 import { currentMoodStore } from "@/lib/journal";
 import type { MoodId } from "@/lib/moods";
@@ -28,7 +27,10 @@ export function ChatDrawer() {
   useEffect(() => {
     let id = localStorage.getItem("sessionId");
     if (!id) {
-      id = uuid();
+      id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
       localStorage.setItem("sessionId", id);
     }
     sessionId.current = id;
@@ -87,6 +89,11 @@ export function ChatDrawer() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId: sessionId.current, message: content, history }),
         });
+        if (res.status === 429) {
+          const { assistantMsg } = (await res.json().catch(() => ({}))) as { assistantMsg?: string };
+          setMsgs((prev) => [...prev, { role: "assistant", content: assistantMsg ?? "Let's pause for a moment — try again shortly." }]);
+          return;
+        }
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as {
           assistantMsg: string;
