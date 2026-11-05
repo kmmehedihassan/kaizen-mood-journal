@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.mjs --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build": "prisma generate && node scripts/db-sync.mjs && next build",
     "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "test": "node --import tsx --test tests/*.test.ts && node --conditions=react-server --import tsx --test tests/*.server-test.ts"

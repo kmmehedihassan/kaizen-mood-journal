@@ -62,6 +62,17 @@ export default function NavBar() {
               🔥 <span className="tabular-nums">{current}</span>
             </Link>
           )}
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            title="Settings"
+            aria-current={isActive("/settings") ? "page" : undefined}
+            className={`grid h-9 w-9 place-items-center rounded-full border border-line text-base transition hover:bg-surface-2 ${
+              isActive("/settings") ? "bg-accent-soft" : ""
+            }`}
+          >
+            <span aria-hidden>⚙️</span>
+          </Link>
           <ThemeToggle />
           <button
             type="button"

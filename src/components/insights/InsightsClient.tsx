@@ -4,9 +4,11 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { TrendChart } from "@/components/insights/TrendChart";
+import { WeeklyReviewCard } from "@/components/insights/WeeklyReviewCard";
 import { toast } from "@/components/Toaster";
 import {
   byDay,
+  clearJournal,
   completedActionsStore,
   dayValence,
   exportJournal,
@@ -116,6 +118,8 @@ export function InsightsClient() {
         <Stat emoji="🌱" label="Kaizen growth" value={`${compound.toFixed(2)}×`} hint={`1% better × ${s.totalDays} days tended`} />
         <Stat emoji="✅" label="Tiny steps taken" value={String(actionCount)} hint="1% actions completed" />
       </section>
+
+      <WeeklyReviewCard />
 
       <section className="card space-y-3 p-5" aria-labelledby="trend-h">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -235,7 +239,7 @@ export function InsightsClient() {
             className="btn btn-ghost text-rose-600"
             onClick={() => {
               if (confirm("Delete all journal entries from this browser? This can't be undone.")) {
-                journalStore.set([]);
+                clearJournal();
                 toast("Journal cleared", "🧹");
               }
             }}

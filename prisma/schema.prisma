@@ -29,3 +29,14 @@ model Quote {
   text     String
   author   String
 }
+
+/// End-to-end encrypted journal backups for cross-device sync.
+/// `id` is a hash derived from the user's sync code; `ciphertext` is AES-GCM
+/// encrypted on the device, so the server can never read journal contents.
+model SyncVault {
+  id         String   @id
+  ciphertext String
+  revision   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

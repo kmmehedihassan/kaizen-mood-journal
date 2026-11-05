@@ -10,6 +10,8 @@ export interface JournalEntry {
   id: string;
   day: string; // YYYY-MM-DD (local)
   createdAt: number;
+  /** Last edit time; used to resolve conflicts when syncing devices. */
+  updatedAt?: number;
   mood: MoodId;
   intensity: number; // 1..5
   note: string;
@@ -19,7 +21,12 @@ export interface JournalEntry {
 }
 
 export const journalStore = createLocalStore<JournalEntry[]>("kaizen.journal.v1", []);
-export const favoritesStore = createLocalStore<Quote[]>("kaizen.favorites.v1", []);
+export type SavedQuote = Quote & { savedAt?: number };
+export const favoritesStore = createLocalStore<SavedQuote[]>("kaizen.favorites.v1", []);
+/** id → deletion time. Lets a deletion on one device win over a stale copy on another. */
+export const tombstonesStore = createLocalStore<Record<string, number>>("kaizen.tombstones.v1", {});
+export const breathSessionsStore = createLocalStore<number>("kaizen.breathSessions", 0);
+export const seenMilestonesStore = createLocalStore<string[]>("kaizen.milestones.v1", []);
 export const currentMoodStore = createLocalStore<MoodId | null>("kaizen.currentMood", null);
 export const completedActionsStore = createLocalStore<Record<string, string[]>>("kaizen.actions.v1", {});
 
@@ -52,12 +59,22 @@ export function addEntry(input: Omit<JournalEntry, "id" | "createdAt" | "day"> &
 }
 
 export function updateEntry(id: string, patch: Partial<JournalEntry>) {
-  journalStore.set((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  journalStore.set((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch, updatedAt: Date.now() } : e)));
 }
 
 export function deleteEntry(id: string) {
+  tombstonesStore.set((t) => ({ ...t, [id]: Date.now() }));
   journalStore.set((prev) => prev.filter((e) => e.id !== id));
 }
+
+export function clearJournal() {
+  const now = Date.now();
+  const ids = journalStore.get().map((e) => e.id);
+  tombstonesStore.set((t) => ({ ...t, ...Object.fromEntries(ids.map((id) => [id, now])) }));
+  journalStore.set([]);
+}
+
+export const favoriteKey = (text: string) => `fav:${text.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
 
 export function clampIntensity(n: number) {
   return Math.min(5, Math.max(1, Math.round(Number.isFinite(n) ? n : 3)));
@@ -70,8 +87,10 @@ export function normalizeTags(tags: string[]) {
 }
 
 export function toggleFavorite(q: Quote) {
+  const isSaved = favoritesStore.get().some((f) => f.text === q.text);
+  if (isSaved) tombstonesStore.set((t) => ({ ...t, [favoriteKey(q.text)]: Date.now() }));
   favoritesStore.set((prev) =>
-    prev.some((f) => f.text === q.text) ? prev.filter((f) => f.text !== q.text) : [q, ...prev]
+    isSaved ? prev.filter((f) => f.text !== q.text) : [{ ...q, savedAt: Date.now() }, ...prev]
   );
 }
 

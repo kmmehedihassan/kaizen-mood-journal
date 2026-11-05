@@ -6,6 +6,9 @@ import { ChatDrawer } from "@/components/ChatDrawer";
 import { MoodAmbience } from "@/components/MoodAmbience";
 import { Toaster } from "@/components/Toaster";
 import { SITE_URL } from "@/lib/site";
+import { SyncManager } from "@/components/SyncManager";
+import { ReminderManager } from "@/components/ReminderManager";
+import { MilestoneWatcher } from "@/components/MilestoneWatcher";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -47,6 +50,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh antialiased">
         <div className="ambient" aria-hidden />
         <MoodAmbience />
+        <SyncManager />
+        <ReminderManager />
+        <MilestoneWatcher />
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 btn btn-primary">
           Skip to content
         </a>
@@ -55,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         <footer className="mx-auto max-w-5xl px-4 pb-10 text-center text-xs text-muted sm:px-6">
-          Your journal lives only in this browser. Kaizen is a wellbeing companion, not a substitute for professional care.
+          Your journal stays on your device — and is end-to-end encrypted if you turn on sync. Kaizen is a wellbeing companion, not a substitute for professional care.
         </footer>
         <ChatDrawer />
         <Toaster />
