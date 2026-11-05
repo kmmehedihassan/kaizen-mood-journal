@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline · Kaizen</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f7faf8; --ink: #24303a; --muted: #5f6b76; --accent: #3f8f6b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14191a; --ink: #eef2f3; --muted: #a7b1b8; --accent: #7fcca5; } }
+  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; }
+  main { max-width: 26rem; text-align: center; }
+  .icon { font-size: 3.5rem; }
+  h1 { font-size: 1.5rem; margin: .5rem 0; }
+  p { color: var(--muted); line-height: 1.55; }
+  a { display: inline-block; margin-top: 1rem; padding: .65rem 1.2rem; border-radius: 999px; background: var(--accent);
+      color: var(--bg); font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body>
+<main>
+  <div class="icon" aria-hidden="true">🌙</div>
+  <h1>You're offline</h1>
+  <p>No problem — your journal lives on this device. Pages you've already opened still work, and anything you write will sync when you're back online.</p>
+  <a href="/journal">Open journal</a>
+</main>
+</body>
+</html>

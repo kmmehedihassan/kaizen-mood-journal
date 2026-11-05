@@ -21,16 +21,26 @@ and watch your days grow into a **Mood Garden**.
 | **💬 Quotes** (`/quotes`) | 55+ curated quotes in 7 collections (motivational, romantic, funny, calm, resilience, gratitude, wisdom). Search, shuffle, "surprise me", save favourites, **read aloud**, share, or **download as an image**. |
 | **🤖 Chat companion** | `⌘K` / `Ctrl+K` anywhere. Greets you, routes quote requests, answers feelings with empathy, a tiny step, a quote and quick links, and chats freely through an LLM. Includes a crisis-safety response. |
 | **🎨 Living theme** | The app's colour gently shifts to match your latest mood. Light/dark/system theme, mobile-first, keyboard accessible, and respects reduced motion. |
-| **📲 Installable** | Add Kaizen to your home screen or desktop as an app, with shortcuts to check-in, Breathe and Garden. |
+| **📲 Installable & offline** | Add Kaizen to your home screen or desktop. A service worker keeps visited pages working offline, with a static offline fallback. |
+| **⏰ Daily reminders** (`/settings`) | Pick a time for browser notifications (while open or installed; background where supported), or download a repeating calendar event that works on every phone. A home-page nudge appears if you haven't checked in. |
+| **🔄 Encrypted sync** (`/settings`) | Optional, account-free sync between devices. Your journal is encrypted on-device (AES-GCM, key derived from a private 100-bit sync code) before upload; the server stores only ciphertext. Edits merge, deletions propagate, and simultaneous saves never overwrite each other. |
+| **✨ Weekly review** (`/insights`) | A short AI (or built-in) review of your last 7 days: a bright spot, a pattern, and one 1% focus for next week. Only a summary is sent. |
+| **🎙️ Voice journaling** | Speak your entry; the browser's speech recognition types it for you. |
+| **🌧️ Ambient sounds** (`/breathe`) | Rain, waves or a warm tone, generated live with the Web Audio API — no audio files. |
+| **🏅 Milestones** (`/garden`) | 15 achievements for consistency, variety and self-care, celebrated as you unlock them. |
+| **🖼️ Shareable garden** | Turn your last five weeks into a 1080×1350 image to share or save. |
 
 ### Privacy by design
-Journal entries, favourites and streaks live **only in your browser's localStorage**. Nothing is
-sent anywhere unless you press **Reflect** (sends that one entry to the AI provider, not stored) or use chat.
+Journal entries, favourites and streaks live **in your browser's localStorage**. Nothing leaves the device unless you:
+- press **Reflect** or **Write my review** (sends that entry / a weekly summary to the AI provider; not stored), use chat, or
+- turn on **sync**, which uploads only end-to-end encrypted data the server cannot read.
+
+Lose the sync code and the synced copy can't be recovered — by design.
 
 ### Works with zero configuration
 - **No database?** Quotes come from the built-in library (`src/data/quotes.ts`), and chat history is kept in the browser.
 - **No AI key?** Chat and reflections fall back to rule-based responses built from the mood model.
-- **Database configured?** Chat sessions are persisted, and any extra quotes in the `Quote` table are merged into the library.
+- **Database configured?** Chat sessions are persisted, cross-device sync is available, and any extra quotes in the `Quote` table are merged into the library.
 
 ---
 
@@ -69,6 +79,8 @@ DATABASE_URL="postgresql://USER:PASS@HOST:5432/postgres?sslmode=require"
 DIRECT_URL="postgresql://USER:PASS@HOST:5432/postgres?sslmode=require"
 ```
 
+**Deploying:** the Vercel build runs `scripts/db-sync.mjs`, which applies *additive* schema changes (e.g. the `SyncVault` table) with `prisma db push`. It never accepts data loss and never fails the build.
+
 With a database:
 
 ```bash
@@ -83,7 +95,7 @@ npm run seed            # optional: copy the built-in quotes into the DB
 | `npm run build` / `start` | Production build / serve |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint (zero warnings allowed) |
-| `npm test` | Unit + API tests (Node test runner + tsx) |
+| `npm test` | Unit + API tests (Node test runner + tsx). Set `TEST_DATABASE_URL` to also run the sync tests against Postgres |
 | `npm run seed` | Seed quotes into the DB |
 
 ---
@@ -96,8 +108,10 @@ npm run seed            # optional: copy the built-in quotes into the DB
 | `GET` / `DELETE` | `/api/messages?sessionId=` | Read or clear a chat session (DB only) |
 | `GET` | `/api/quotes` | Query: `category`, `q`, `limit`, `random`, `daily` |
 | `POST` | `/api/reflect` | `{ mood, intensity, note, tags }` → `{ reflection, source: "ai" \| "builtin" }` |
+| `POST` | `/api/review` | A week summary → `{ review, source }` |
+| `GET` / `PUT` / `DELETE` | `/api/sync` | Encrypted vault storage. `PUT { vault, ciphertext, baseRevision }` returns `409` if another device saved first |
 
-The AI endpoints are rate-limited per client (chat 20/min, reflect 10/min) and return `429` with `Retry-After` when exceeded.
+The AI endpoints are rate-limited per client (chat 20/min, reflect 10/min, review 5/min; sync 60/min) and return `429` with `Retry-After` when exceeded.
 
 Legacy URLs `/motivational`, `/romantic` and `/funny` permanently redirect to `/quotes/<category>`.
 

@@ -11,6 +11,8 @@ import { QUOTES } from "@/data/quotes";
 import { addEntry, completedActionsStore, currentMoodStore, journalStore, streaks, toggleAction } from "@/lib/journal";
 import { dayKey, timeOfDayGreeting } from "@/lib/dates";
 import { useHydrated } from "@/lib/store";
+import { reminderStore } from "@/components/ReminderManager";
+import { isPastTime } from "@/lib/reminders";
 
 export function CheckIn() {
   const hydrated = useHydrated();
@@ -23,6 +25,10 @@ export function CheckIn() {
   useEffect(() => setGreeting(timeOfDayGreeting()), []);
 
   const { journaledToday, current } = streaks(entries);
+  const reminder = reminderStore.use();
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => setNow(new Date()), []);
+  const nudge = hydrated && now && reminder.enabled && !journaledToday && isPastTime(reminder.time, now);
   const today = dayKey();
   const m = mood ? MOOD_MAP[mood] : null;
 
@@ -56,6 +62,12 @@ export function CheckIn() {
             Pick a mood. Kaizen will meet you there with words that fit and one tiny step to feel 1% better.
           </p>
         </div>
+        {nudge && !mood && (
+          <p className="card animate-rise flex items-center gap-2 px-4 py-3 text-sm" role="status">
+            <span aria-hidden>⏰</span>
+            {current > 0 ? `Keep your ${current}-day streak growing — how are you today?` : "It's check-in time. How has today been?"}
+          </p>
+        )}
         <MoodPicker value={mood} onChange={choose} />
         {hydrated && journaledToday && !mood && (
           <p className="text-sm text-muted">✅ You&apos;ve checked in today. Feel free to check in again — moods change.</p>

@@ -3,6 +3,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { MilestonesGrid } from "@/components/garden/MilestonesGrid";
+import { buildGardenSvg, svgToPng } from "@/lib/gardenCard";
 import { Flower, Sprout } from "@/components/Flower";
 import { toast } from "@/components/Toaster";
 import { byDay, dayValence, journalStore, seedDemoData, streaks, type JournalEntry } from "@/lib/journal";
@@ -25,6 +27,7 @@ export function GardenClient() {
   const hydrated = useHydrated();
   const entries = journalStore.use();
   const [selected, setSelected] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   if (!hydrated) return <div className="card h-[32rem] animate-pulse" />;
 
@@ -34,6 +37,40 @@ export function GardenClient() {
   const w = weather(dayValence(recent));
   const { current, totalDays } = streaks(entries);
   const sel = selected ? days.get(selected) ?? [] : [];
+
+  const shareGarden = async () => {
+    setSharing(true);
+    try {
+      const svg = buildGardenSvg({
+        plots: plotDays.map((k) => {
+          const list = days.get(k);
+          const top = list?.length ? pickTop(list) : null;
+          return { day: k, mood: top?.mood, intensity: top?.intensity };
+        }),
+        streak: current,
+        flowers: entries.length,
+        weather: `${w.icon} ${w.label}`,
+        rangeLabel: `${formatDay(plotDays[0], { month: "short", day: "numeric" })} – ${formatDay(plotDays.at(-1)!, { month: "short", day: "numeric", year: "numeric" })}`,
+      });
+      const blob = await svgToPng(svg);
+      const file = new File([blob], `kaizen-garden-${dayKey()}.png`, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "My Mood Garden", text: "Growing 1% at a time 🌱" }).catch(() => {});
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast("Garden image downloaded", "🖼️");
+      }
+    } catch {
+      toast("Couldn't create the image in this browser", "⚠️");
+    } finally {
+      setSharing(false);
+    }
+  };
 
   // Year in pixels: 26 weeks, columns = weeks, rows = weekdays (Sun..Sat).
   const today = new Date();
@@ -124,6 +161,14 @@ export function GardenClient() {
         )}
       </section>
 
+      {entries.length > 0 && (
+        <div className="-mt-6 flex justify-end">
+          <button type="button" className="btn btn-ghost" onClick={shareGarden} disabled={sharing}>
+            {sharing ? "Painting…" : "🖼️ Share my garden"}
+          </button>
+        </div>
+      )}
+
       {entries.length === 0 && (
         <div className="card flex flex-wrap items-center justify-between gap-4 p-5">
           <p className="text-ink-2">Your garden is waiting for its first seed.</p>
@@ -177,6 +222,8 @@ export function GardenClient() {
           ))}
         </ul>
       </section>
+
+      <MilestonesGrid />
     </div>
   );
 }

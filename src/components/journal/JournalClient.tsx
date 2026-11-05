@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MoodPicker } from "@/components/MoodPicker";
 import { EntryCard } from "@/components/journal/EntryCard";
+import { useDictation } from "@/components/journal/useDictation";
 import { toast } from "@/components/Toaster";
 import { MOODS, MOOD_MAP, isMoodId, type MoodId } from "@/lib/moods";
 import { detectMood } from "@/lib/sentiment";
@@ -42,6 +43,14 @@ export function JournalClient() {
     if (isMoodId(m)) setMood(m);
     setPrompt(PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
   }, [params]);
+
+  const dictation = useDictation((text) =>
+    setNote((prev) => {
+      if (!text) return prev;
+      const sentence = text.charAt(0).toUpperCase() + text.slice(1);
+      return prev ? `${prev.trimEnd()}${/[.!?]$/.test(prev.trimEnd()) ? "" : "."} ${sentence}` : sentence;
+    })
+  );
 
   // Live mood suggestion from what the user writes.
   const detected = useMemo(() => detectMood(note), [note]);
@@ -114,14 +123,31 @@ export function JournalClient() {
           <div>
             <div className="flex items-center justify-between">
               <label htmlFor="note" className="text-sm font-medium">{prompt}</label>
-              <button
-                type="button"
-                className="text-xs text-muted hover:text-ink"
-                onClick={() => setPrompt(PROMPTS[(PROMPTS.indexOf(prompt) + 1) % PROMPTS.length])}
-                title="Another prompt"
-              >
-                ↻
-              </button>
+              <span className="flex items-center gap-1">
+                {dictation.supported && (
+                  <button
+                    type="button"
+                    onClick={dictation.listening ? dictation.stop : dictation.start}
+                    aria-pressed={dictation.listening}
+                    aria-label={dictation.listening ? "Stop voice input" : "Speak your entry"}
+                    title={dictation.listening ? "Stop" : "Speak instead of typing"}
+                    className={`grid h-8 w-8 place-items-center rounded-full text-sm transition ${
+                      dictation.listening ? "animate-pulse bg-rose-500 text-white" : "text-muted hover:bg-surface-2 hover:text-ink"
+                    }`}
+                  >
+                    {dictation.listening ? "■" : "🎙️"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="grid h-8 w-8 place-items-center rounded-full text-xs text-muted hover:bg-surface-2 hover:text-ink"
+                  onClick={() => setPrompt(PROMPTS[(PROMPTS.indexOf(prompt) + 1) % PROMPTS.length])}
+                  title="Another prompt"
+                  aria-label="Another prompt"
+                >
+                  ↻
+                </button>
+              </span>
             </div>
             <textarea
               id="note"
@@ -132,6 +158,13 @@ export function JournalClient() {
               maxLength={4000}
               onChange={(e) => setNote(e.target.value)}
             />
+            {dictation.listening && (
+              <p className="mt-2 text-xs text-ink-2" aria-live="polite">
+                <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500" />
+                Listening… <span className="italic text-muted">{dictation.interim}</span>
+              </p>
+            )}
+            {dictation.error && <p className="mt-2 text-xs text-rose-600" role="alert">{dictation.error}</p>}
             {suggested && suggested !== mood && (
               <button type="button" onClick={() => setMood(suggested)} className="mt-2 text-xs text-accent-ink hover:underline">
                 Sounds like you might be feeling {MOOD_MAP[suggested].label.toLowerCase()} {MOOD_MAP[suggested].emoji} — use that?

@@ -3,6 +3,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SOUNDSCAPES, playSoundscape, setSoundscapeVolume, stopSoundscape, type Soundscape } from "@/lib/ambient";
+import { breathSessionsStore } from "@/lib/journal";
+import { createLocalStore, useHydrated } from "@/lib/store";
+
+const soundPrefStore = createLocalStore<{ sound: Soundscape; volume: number }>("kaizen.sound.v1", { sound: "off", volume: 0.5 });
 
 type Phase = { name: "Breathe in" | "Hold" | "Breathe out"; secs: number; scale: number };
 type Pattern = { id: string; name: string; blurb: string; phases: Phase[] };
@@ -52,6 +57,24 @@ export function Breather() {
   const [finished, setFinished] = useState(false);
   const tick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
+  const pref = soundPrefStore.use();
+  const hydrated = useHydrated();
+  const [soundOn, setSoundOn] = useState(false);
+
+  // Stop audio when leaving the page.
+  useEffect(() => () => void stopSoundscape(), []);
+
+  const chooseSound = (sound: Soundscape) => {
+    soundPrefStore.set((p) => ({ ...p, sound }));
+    if (sound === "off") {
+      setSoundOn(false);
+      void stopSoundscape();
+    } else {
+      setSoundOn(true);
+      void playSoundscape(sound, pref.volume);
+    }
+  };
+
   const phase = pattern.phases[phaseIdx];
   const total = minutes * 60;
 
@@ -70,6 +93,7 @@ export function Breather() {
         clearInterval(tick.current);
         setRunning(false);
         setFinished(true);
+        breathSessionsStore.set((n) => n + 1);
         if ("vibrate" in navigator) navigator.vibrate?.(200);
         return;
       }
@@ -88,6 +112,11 @@ export function Breather() {
   const start = () => {
     setFinished(false);
     setRunning(true);
+    // Resume the chosen soundscape (starting audio needs this click).
+    if (pref.sound !== "off" && !soundOn) {
+      setSoundOn(true);
+      void playSoundscape(pref.sound, pref.volume);
+    }
   };
 
   return (
@@ -166,6 +195,41 @@ export function Breather() {
         ) : (
           <button type="button" className="btn btn-primary px-8" onClick={start}>{finished ? "Again" : "Begin"}</button>
         )}
+      </div>
+
+      <div className="card mx-auto max-w-md space-y-3 p-4">
+        <div className="flex flex-wrap justify-center gap-1.5" role="radiogroup" aria-label="Background sound">
+          {SOUNDSCAPES.map((sc) => (
+            <button
+              key={sc.id}
+              type="button"
+              role="radio"
+              aria-checked={hydrated && (sc.id === "off" ? !soundOn : soundOn && pref.sound === sc.id)}
+              className="chip"
+              onClick={() => chooseSound(sc.id)}
+            >
+              <span aria-hidden>{sc.emoji}</span> {sc.label}
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-3 text-xs text-muted">
+          <span aria-hidden>🔈</span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={pref.volume}
+            aria-label="Volume"
+            className="flex-1"
+            onChange={(e) => {
+              const volume = Number(e.target.value);
+              soundPrefStore.set((p) => ({ ...p, volume }));
+              if (soundOn) setSoundscapeVolume(volume);
+            }}
+          />
+          <span aria-hidden>🔊</span>
+        </label>
       </div>
 
       {finished && (
