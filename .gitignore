@@ -13,10 +13,10 @@
 /prisma/dev.db
 /prisma/migrations/
 
-# Environment variables
-.env.local
-.env.*.local
+# Environment variables (never commit secrets; see .env.example)
 .env
+.env.*
+!.env.example
 
 # Next.js cache & telemetry
 .next/
@@ -62,3 +62,7 @@ Thumbs.db
 # Coverage reports
 coverage/
 .vercel
+
+# SQLite artifacts
+*.db
+*.db-journal

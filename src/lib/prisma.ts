@@ -1,21 +1,42 @@
 // src/lib/prisma.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 declare global {
-  // ensures we reuse the client in development
   // eslint-disable-next-line no-var
-  // This is a global variable to hold the Prisma client instance
   var prisma: PrismaClient | undefined;
 }
+
+/** The database is optional: without DATABASE_URL the app runs on built-in data. */
+export const hasDb = Boolean(process.env.DATABASE_URL);
 
 export const db: PrismaClient =
   global.prisma ||
   new PrismaClient({
-    log: ['query'], // optional: shows SQL in terminal
+    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 
-// In development, attach to the global object so we don't create
-// a new client on every HMR reload:
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   global.prisma = db;
+}
+
+/**
+ * Run a DB operation, but never let a slow/unavailable database break a page.
+ * Returns `fallback` if there is no DB, it errors, or it takes too long.
+ */
+export async function safeDb<T>(op: () => Promise<T>, fallback: T, timeoutMs = 3000): Promise<T> {
+  if (!hasDb) return fallback;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      op(),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), timeoutMs);
+      }),
+    ]);
+  } catch (e) {
+    console.error("[db]", e instanceof Error ? e.message : e);
+    return fallback;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
